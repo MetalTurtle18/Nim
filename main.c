@@ -2,13 +2,13 @@
 
 int legalMove(int row0[3], int row1[5], int row2[7], int chosenRow, int pieces);
 
-int getMove(int row0[], int row1[], int row2[], int *row, int *pieces);
+int getMove(int row0[], int row1[], int row2[], int *chosenRow, int *pieces, int *saveFlag);
 
 int gameWon(int row0[3], int row1[5], int row2[7]);
 
 int rowSum(int row[], int size);
 
-int readGame(int *row0, int *row1, int *row2, int *player);
+int readGame(int row0[3], int row1[5], int row2[7], int *player);
 
 int writeGame(int row0[3], int row1[5], int row2[7], int player);
 
@@ -26,18 +26,23 @@ int main(void) {
     int player = 0;
     int chosenRow;
     int pieces;
+    int saveGameFlag = 0;
 
     while (!gameWon(row0, row1, row2)) {
         printf("---------------------------------------------\n");
         displayBoard(row0, row1, row2);
         printf("It is player %c's turn.\n", player ? 'B' : 'A');
 
-        while (!getMove(row0, row1, row2, &chosenRow, &pieces)) {}
-        row = chosenRow == 1 ? row0
-                             : (chosenRow == 2 ? row1
-                                               : row2);
-        removePieces(row, pieces);
-        player = !player;
+        while (!getMove(row0, row1, row2, &chosenRow, &pieces, &saveGameFlag)) {}
+        if (saveGameFlag) {
+            writeGame(row0, row1, row2, player);
+        } else {
+            row = chosenRow == 1 ? row0
+                                 : (chosenRow == 2 ? row1
+                                                   : row2);
+            removePieces(row, pieces);
+            player = !player;
+        }
     }
 
     printf("Player %c wins!", player ? 'B' : 'A');
@@ -58,10 +63,14 @@ int legalMove(int row0[3], int row1[5], int row2[7], int row, int pieces) {
     }
 }
 
-int getMove(int row0[3], int row1[5], int row2[7], int *row, int *pieces) {
+int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pieces, int *saveFlag) {
     printf("What move would you like to make (enter in the form 'row pieces' eg. '2 3')? ");
-    scanf("%1d %1d", row, pieces);
-    if (!legalMove(row0, row1, row2, *row, *pieces)) {
+    scanf("%1d %1d", chosenRow, pieces);
+    if (*chosenRow < 0) {
+        *saveFlag = 1;
+        return 1;
+    }
+    if (!legalMove(row0, row1, row2, *chosenRow, *pieces)) {
         printf("Invalid move!\n");
         return 0;
     }
@@ -82,6 +91,21 @@ int rowSum(int row[], int size) {
     for (i = 0; i < size; i++)
         sum += row[i];
     return sum;
+}
+
+int writeGame(int row0[3], int row1[5], int row2[7], int player) {
+    FILE *file;
+    char fileName[31];
+    printf("---------------------------------------------\n");
+    printf("             Saving Game to File\n");
+    printf("Enter the name of the file you would like to save this game to (this will overwrite existing files) (30 character limit): ");
+    scanf("%30s", fileName);
+    file = fopen(fileName, "w");
+
+    // TODO: Save the data to the file
+
+    fclose(file);
+    return 1;
 }
 
 void removePieces(int row[], int pieces) {
