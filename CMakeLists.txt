@@ -3,4 +3,5 @@ project(Nim C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(Nim main.c)
+add_executable(Nim main.c
+        ANSI-color-codes.h)

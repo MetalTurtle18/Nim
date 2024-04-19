@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "ANSI-color-codes.h"
 
 int legalMove(int row0[3], int row1[5], int row2[7], int chosenRow, int pieces);
 
@@ -51,7 +52,7 @@ int main(void) {
     while (!gameWon(row0, row1, row2) && !saveGameFlag) {
         printf("---------------------------------------------\n");
         displayBoard(row0, row1, row2);
-        printf("It is player %c's turn.\n", player ? 'B' : 'A');
+        printf("It is player "BBLU"%c"CRESET"'s turn.\n", player ? 'B' : 'A');
         printf("What move would you like to make?\n");
         pickedRowFlag = 0;
 
@@ -231,8 +232,12 @@ void displayBoard(int row0[3], int row1[5], int row2[7]) {
 void printRow(int *row, int number, int size) {
     // TODO: Implement fancy printing
     int i;
-    printf("Row %d%*c", number, 10 - size, ' ');
-    for (i = 0; i < size; i++)
-        printf("%2c", *(row + i) ? '|' : ' ');
-    printf("\n");
+    printf(BHRED"Row %d%*c"CRESET, number, 10 - size, ' ');
+    for (i = 0; i < size; i++) {
+        if (*(row + i))
+            printf(WHTHB" "BHBLU"■"CRESET);
+        else
+            printf(WHTHB" ■"CRESET);
+    }
+    printf(WHTHB" "CRESET"\n");
 }
