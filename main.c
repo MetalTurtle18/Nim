@@ -129,7 +129,8 @@ int writeGame(int row0[3], int row1[5], int row2[7], int player) {
         if (createNewFile != 'y' && createNewFile != 'Y')
             return 0;
     }
-    fclose(file);
+    if (file != NULL)
+        fclose(file);
 
     file = fopen(fileName, "w");
 
