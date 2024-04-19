@@ -8,9 +8,9 @@ int gameWon(int row0[3], int row1[5], int row2[7]);
 
 int rowSum(int row[], int size);
 
-int readGame(int row0[3], int row1[5], int row2[7], int *player);
+int readGame(int row0[3], int row1[5], int row2[7], int *player); // TODO: implement game reading
 
-void writeGame(int row0[3], int row1[5], int row2[7], int player);
+int writeGame(int row0[3], int row1[5], int row2[7], int player);
 
 void writeRow(FILE *file, int row[], int size);
 
@@ -31,6 +31,8 @@ int main(void) {
     int saveGameFlag = 0;
     int pickedRowFlag;
 
+    // TODO: Implement compete against CPU feature
+
     while (!gameWon(row0, row1, row2) && !saveGameFlag) {
         printf("---------------------------------------------\n");
         displayBoard(row0, row1, row2);
@@ -40,7 +42,10 @@ int main(void) {
 
         while (!getMove(row0, row1, row2, &chosenRow, &pickedRowFlag, &pieces, &saveGameFlag)) {}
         if (saveGameFlag) {
-            writeGame(row0, row1, row2, player);
+            if (!writeGame(row0, row1, row2, player)) {
+                saveGameFlag = 0;
+            continue;
+            }
         } else {
             row = chosenRow == 1 ? row0
                                  : (chosenRow == 2 ? row1
@@ -108,14 +113,25 @@ int rowSum(int row[], int size) {
     return sum;
 }
 
-void writeGame(int row0[3], int row1[5], int row2[7], int player) {
+int writeGame(int row0[3], int row1[5], int row2[7], int player) {
     FILE *file;
     char fileName[31];
+    char createNewFile;
     printf("---------------------------------------------\n");
     printf("Saving Game to File\n");
     printf("Enter the name of the file you would like to save this game to (this will overwrite existing files) (30 character limit): ");
     scanf("%30s", fileName);
-    file = fopen(fileName, "w"); // TODO: handle new files
+    file = fopen(fileName, "r");
+
+    if (file == NULL) {
+        printf("There is no file called %s. Do you want to create it? (Y/n) ", fileName);
+        scanf(" %c", &createNewFile);
+        if (createNewFile != 'y' && createNewFile != 'Y')
+            return 0;
+    }
+    fclose(file);
+
+    file = fopen(fileName, "w");
 
     writeRow(file, row0, 3);
     writeRow(file, row1, 5);
@@ -123,6 +139,7 @@ void writeGame(int row0[3], int row1[5], int row2[7], int player) {
     fprintf(file, "%c.", player ? 'B' : 'A');
 
     fclose(file);
+    return 1;
 }
 
 void writeRow(FILE *file, int row[], int size) {
@@ -151,6 +168,7 @@ void displayBoard(int row0[3], int row1[5], int row2[7]) {
 }
 
 void printRow(int *row, int number, int size) {
+    // TODO: Implement fancy printing
     int i;
     printf("Row %d%*c", number, 10 - size, ' ');
     for (i = 0; i < size; i++)
