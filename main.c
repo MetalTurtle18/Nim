@@ -2,7 +2,7 @@
 
 int legalMove(int row0[3], int row1[5], int row2[7], int chosenRow, int pieces);
 
-int getMove(int row0[], int row1[], int row2[], int *chosenRow, int *pieces, int *saveFlag);
+int getMove(int row0[], int row1[], int row2[], int *chosenRow, int *pickedRowFlag, int *pieces, int *saveFlag);
 
 int gameWon(int row0[3], int row1[5], int row2[7]);
 
@@ -29,13 +29,16 @@ int main(void) {
     int chosenRow;
     int pieces;
     int saveGameFlag = 0;
+    int pickedRowFlag;
 
     while (!gameWon(row0, row1, row2) && !saveGameFlag) {
         printf("---------------------------------------------\n");
         displayBoard(row0, row1, row2);
         printf("It is player %c's turn.\n", player ? 'B' : 'A');
+        printf("What move would you like to make?\n");
+        pickedRowFlag = 0;
 
-        while (!getMove(row0, row1, row2, &chosenRow, &pieces, &saveGameFlag)) {}
+        while (!getMove(row0, row1, row2, &chosenRow, &pickedRowFlag, &pieces, &saveGameFlag)) {}
         if (saveGameFlag) {
             writeGame(row0, row1, row2, player);
         } else {
@@ -66,13 +69,22 @@ int legalMove(int row0[3], int row1[5], int row2[7], int row, int pieces) {
     }
 }
 
-int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pieces, int *saveFlag) {
-    printf("What move would you like to make (enter in the form 'row pieces' eg. '2 3')? "); // TODO: split row and pieces
-    scanf("%d %d", chosenRow, pieces);
-    if (*chosenRow < 0) {
-        *saveFlag = 1;
-        return 1;
+int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRowFlag, int *pieces, int *saveFlag) {
+    if (!*pickedRowFlag) {
+        printf("Enter the row you would like to take from: ");
+        scanf("%d", chosenRow);
+        if (*chosenRow < 0) {
+            *saveFlag = 1;
+            return 1;
+        }
+        if (!legalMove(row0, row1, row2, *chosenRow, 1)) {
+            printf("Invalid row!\n");
+            return 0;
+        }
+        *pickedRowFlag = 1;
     }
+    printf("Enter the number of pieces you would like to take from row %d: ", *chosenRow);
+    scanf("%d", pieces);
     if (!legalMove(row0, row1, row2, *chosenRow, *pieces)) {
         printf("Invalid move!\n");
         return 0;
@@ -117,7 +129,7 @@ void writeRow(FILE *file, int row[], int size) {
     int i;
     for (i = 0; i < size; i++) {
         fprintf(file, "%c", row[i] ? 'F' : 'E');
-        fprintf(file, "%c", i == size -1 ? '.' : ',');
+        fprintf(file, "%c", i == size - 1 ? '.' : ',');
     }
     fprintf(file, "\n");
 }
