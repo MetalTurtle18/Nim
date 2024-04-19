@@ -2,13 +2,15 @@
 
 int legalMove(int row0[3], int row1[5], int row2[7], int chosenRow, int pieces);
 
-int getMove(int row0[], int row1[], int row2[], int *chosenRow, int *pickedRowFlag, int *pieces, int *saveFlag);
+int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRowFlag, int *pieces, int *saveFlag);
 
 int gameWon(int row0[3], int row1[5], int row2[7]);
 
 int rowSum(int row[], int size);
 
 int readGame(int row0[3], int row1[5], int row2[7], int *player); // TODO: implement game reading
+
+void readRow(FILE *file, int row[]);
 
 int writeGame(int row0[3], int row1[5], int row2[7], int player);
 
@@ -30,9 +32,22 @@ int main(void) {
     int pieces;
     int saveGameFlag = 0;
     int pickedRowFlag;
+    int gameSelection;
+    int readyFlag = 0;
 
     // TODO: Implement compete against CPU feature
 
+    printf("Welcome to Nim!\n");
+    while (!readyFlag) {
+        printf("What would you like to do?\n1: Start new game\n2: Load game from file\nEnter selection: ");
+        scanf("%d", &gameSelection);
+        if (gameSelection == 1) {
+            printf("Ok. Preparing new game...\n");
+            readyFlag = 1;
+        } else if (gameSelection == 2) {
+            readyFlag = readGame(row0, row1, row2, &player);
+        }
+    }
     while (!gameWon(row0, row1, row2) && !saveGameFlag) {
         printf("---------------------------------------------\n");
         displayBoard(row0, row1, row2);
@@ -44,7 +59,7 @@ int main(void) {
         if (saveGameFlag) {
             if (!writeGame(row0, row1, row2, player)) {
                 saveGameFlag = 0;
-            continue;
+                continue;
             }
         } else {
             row = chosenRow == 1 ? row0
@@ -57,6 +72,7 @@ int main(void) {
 
     if (!saveGameFlag)
         printf("Player %c wins!", player ? 'B' : 'A');
+
 
     return 0;
 }
@@ -113,6 +129,47 @@ int rowSum(int row[], int size) {
     return sum;
 }
 
+int readGame(int row0[3], int row1[5], int row2[7], int *player) {
+    FILE *file;
+    char fileName[31];
+    char playerChar;
+    printf("---------------------------------------------\n");
+    printf("Reading Game from File\n");
+    printf("Enter the name of the file you would like to load the game from (30 character limit): ");
+    scanf("%30s", fileName);
+    file = fopen(fileName, "r");
+
+    if (file == NULL) {
+        printf("There is no file called %s. Returning to main menu...\n", fileName);
+        return 0;
+    }
+
+    readRow(file, row0);
+    readRow(file, row1);
+    readRow(file, row2);
+    fscanf(file, "%c", &playerChar);
+    *player = playerChar == 'B';
+
+    fclose(file);
+    return 1;
+}
+
+void readRow(FILE *file, int row[]) {
+    char c = ' ';
+    int i = 0;
+    while (c != '.') {
+        fscanf(file, "%c", &c);
+        if (c == ',')
+            continue;
+        else if (c == 'E')
+            row[i] = 0;
+        else if (c == 'F')
+            row[i] = 1;
+        i++;
+    }
+    fseek(file, sizeof(char), SEEK_CUR);
+}
+
 int writeGame(int row0[3], int row1[5], int row2[7], int player) {
     FILE *file;
     char fileName[31];
@@ -126,11 +183,13 @@ int writeGame(int row0[3], int row1[5], int row2[7], int player) {
     if (file == NULL) {
         printf("There is no file called %s. Do you want to create it? (Y/n) ", fileName);
         scanf(" %c", &createNewFile);
-        if (createNewFile != 'y' && createNewFile != 'Y')
+        if (createNewFile != 'y' && createNewFile != 'Y') {
+            printf("Returning to game...\n");
             return 0;
-    }
-    if (file != NULL)
+        }
+    } else {
         fclose(file);
+    }
 
     file = fopen(fileName, "w");
 
@@ -140,6 +199,7 @@ int writeGame(int row0[3], int row1[5], int row2[7], int player) {
     fprintf(file, "%c.", player ? 'B' : 'A');
 
     fclose(file);
+    printf("Game saved. Exiting...");
     return 1;
 }
 
