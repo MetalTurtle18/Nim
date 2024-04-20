@@ -1,12 +1,14 @@
 #include <stdio.h>
 
-// Define color codes
-#define BOARD_BG "\e[0m"
-#define EMPTY_PIECE "\e[0m"
-#define FULL_PIECE "\e[0m"
-#define PLAYER "\e[0m"
-#define RESET "\e[0m"
-#define ROW_LABEL "\e[1;38;2;0;255;0m"
+// Define color codes/text placeholders
+#define BOARD_BG "\e[48;5;255m"
+#define EMPTY_PIECE "\e[1;38;2;200;200;240m"
+#define FULL_PIECE "\e[1;38;2;50;50;240m"
+#define NIM "\e[1;4;38;5;166mN\e[1;38;5;142mi\e[1;38;5;117mm\e[0;1;38;2;255;255;255m"
+#define PLAYER "\e[1;91m"
+#define RESET "\e[0;1;38;2;255;255;255m"
+#define ROW_LABEL "\e[1;38;5;161m"
+#define SPACER "--------------------------------------------------------------------------------------------------\n"
 
 
 
@@ -47,7 +49,7 @@ int main(void) {
 
     // TODO: Implement compete against CPU feature
 
-    printf("Welcome to Nim!\n");
+    printf(RESET"Welcome to "NIM"!\n");
     while (!readyFlag) {
         printf("What would you like to do?\n1: Start new game\n2: Load game from file\nEnter selection: ");
         scanf("%d", &gameSelection);
@@ -59,7 +61,7 @@ int main(void) {
         }
     }
     while (!gameWon(row0, row1, row2) && !saveGameFlag) {
-        printf("---------------------------------------------\n");
+        printf(SPACER);
         displayBoard(row0, row1, row2);
         printf("It is player "PLAYER"%c"RESET"'s turn.\n", player ? 'B' : 'A');
         printf("What move would you like to make?\n");
@@ -143,7 +145,7 @@ int readGame(int row0[3], int row1[5], int row2[7], int *player) {
     FILE *file;
     char fileName[31];
     char playerChar;
-    printf("---------------------------------------------\n");
+    printf(SPACER);
     printf("Reading Game from File\n");
     printf("Enter the name of the file you would like to load the game from (30 character limit): ");
     scanf("%30s", fileName);
@@ -151,6 +153,7 @@ int readGame(int row0[3], int row1[5], int row2[7], int *player) {
 
     if (file == NULL) {
         printf("There is no file called %s. Returning to main menu...\n", fileName);
+        printf(SPACER);
         return 0;
     }
 
@@ -184,7 +187,7 @@ int writeGame(int row0[3], int row1[5], int row2[7], int player) {
     FILE *file;
     char fileName[31];
     char createNewFile;
-    printf("---------------------------------------------\n");
+    printf(SPACER);
     printf("Saving Game to File\n");
     printf("Enter the name of the file you would like to save this game to (this will overwrite existing files) (30 character limit): ");
     scanf("%30s", fileName);
@@ -245,7 +248,7 @@ void printRow(int *row, int number, int size) {
         if (*(row + i))
             printf(BOARD_BG" "FULL_PIECE"■"RESET);
         else
-            printf(EMPTY_PIECE" ■"RESET);
+            printf(BOARD_BG" "EMPTY_PIECE"■"RESET);
     }
     printf(BOARD_BG" "RESET"\n");
 }
