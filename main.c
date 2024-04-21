@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 
 // Define color codes/text placeholders
 #define BOARD_BG "\e[48;5;255m"
@@ -12,28 +13,29 @@
 #define SPACER "-------------------------------------------------------------------------\n"
 
 
-
-int legalMove(int row0[3], int row1[5], int row2[7], int chosenRow, int pieces);
+int gameWon(int row0[3], int row1[5], int row2[7]);
 
 int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRowFlag, int *pieces, int *saveFlag);
 
-int gameWon(int row0[3], int row1[5], int row2[7]);
+int legalMove(int row0[3], int row1[5], int row2[7], int chosenRow, int pieces);
 
-int rowSum(int row[], int size);
+int nimSum(int row0[3], int row1[5], int row2[7]);
 
 int readGame(int row0[3], int row1[5], int row2[7], int *player); // TODO: implement game reading
 
-void readRow(FILE *file, int row[]);
+int rowSum(int row[], int size);
 
 int writeGame(int row0[3], int row1[5], int row2[7], int player);
-
-void writeRow(FILE *file, int row[], int size);
-
-void removePieces(int row[], int pieces);
 
 void displayBoard(int row0[3], int row1[5], int row2[7]);
 
 void printRow(int row[], int number, int size);
+
+void readRow(FILE *file, int row[]);
+
+void removePieces(int row[], int pieces);
+
+void writeRow(FILE *file, int row[], int size);
 
 int main(void) {
     int row0[] = {1, 1, 1};
@@ -107,6 +109,14 @@ int legalMove(int row0[3], int row1[5], int row2[7], int row, int pieces) {
     }
 }
 
+int gameWon(int row0[3], int row1[5], int row2[7]) {
+    int sum =
+            rowSum(row0, 3) +
+            rowSum(row1, 5) +
+            rowSum(row2, 7);
+    return sum == 0;
+}
+
 int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRowFlag, int *pieces, int *saveFlag) {
     if (!*pickedRowFlag) {
         printf("Enter the row you would like to take from: ");
@@ -130,20 +140,20 @@ int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRo
     return 1;
 }
 
-int gameWon(int row0[3], int row1[5], int row2[7]) {
-    int sum =
-            rowSum(row0, 3) +
-            rowSum(row1, 5) +
-            rowSum(row2, 7);
-    return sum == 0;
-}
-
-int rowSum(int row[], int size) {
-    int sum = 0;
+int nimSum(int row0[3], int row1[5], int row2[7]) {
+    int a = rowSum(row0, 3);
+    int b = rowSum(row1, 5);
+    int c = rowSum(row2, 7);
+    int nimSum = 0;
     int i;
-    for (i = 0; i < size; i++)
-        sum += row[i];
-    return sum;
+
+    for (i = 0; i < 3; i++) { // The largest sum possible is 7, which is represented in 3 bits
+        nimSum += (a % 2 + b % 2 + c % 2) % 2 * (int) pow(2, i);
+        a = a >> 1;
+        b = b >> 1;
+        c = c >> 1;
+    }
+    return (int) nimSum;
 }
 
 int readGame(int row0[3], int row1[5], int row2[7], int *player) {
@@ -172,20 +182,12 @@ int readGame(int row0[3], int row1[5], int row2[7], int *player) {
     return 1;
 }
 
-void readRow(FILE *file, int row[]) {
-    char c = ' ';
-    int i = 0;
-    while (c != '.') {
-        fscanf(file, "%c", &c);
-        if (c == ',')
-            continue;
-        else if (c == 'E')
-            row[i] = 0;
-        else if (c == 'F')
-            row[i] = 1;
-        i++;
-    }
-    fseek(file, sizeof(char), SEEK_CUR);
+int rowSum(int row[], int size) {
+    int sum = 0;
+    int i;
+    for (i = 0; i < size; i++)
+        sum += row[i];
+    return sum;
 }
 
 int writeGame(int row0[3], int row1[5], int row2[7], int player) {
@@ -221,25 +223,6 @@ int writeGame(int row0[3], int row1[5], int row2[7], int player) {
     return 1;
 }
 
-void writeRow(FILE *file, int row[], int size) {
-    int i;
-    for (i = 0; i < size; i++) {
-        fprintf(file, "%c", row[i] ? 'F' : 'E');
-        fprintf(file, "%c", i == size - 1 ? '.' : ',');
-    }
-    fprintf(file, "\n");
-}
-
-void removePieces(int row[], int pieces) {
-    int removed = 0;
-    int i = 0;
-    while (removed < pieces) {
-        removed += row[i];
-        row[i] = 0;
-        i++;
-    }
-}
-
 void displayBoard(int row0[3], int row1[5], int row2[7]) {
     printRow(row0, 1, 3);
     printRow(row1, 2, 5);
@@ -256,4 +239,39 @@ void printRow(int *row, int number, int size) {
             printf(BOARD_BG" "EMPTY_PIECE"■"RESET);
     }
     printf(BOARD_BG" "RESET"\n");
+}
+
+void readRow(FILE *file, int row[]) {
+    char c = ' ';
+    int i = 0;
+    while (c != '.') {
+        fscanf(file, "%c", &c);
+        if (c == ',')
+            continue;
+        else if (c == 'E')
+            row[i] = 0;
+        else if (c == 'F')
+            row[i] = 1;
+        i++;
+    }
+    fseek(file, sizeof(char), SEEK_CUR);
+}
+
+void removePieces(int row[], int pieces) {
+    int removed = 0;
+    int i = 0;
+    while (removed < pieces) {
+        removed += row[i];
+        row[i] = 0;
+        i++;
+    }
+}
+
+void writeRow(FILE *file, int row[], int size) {
+    int i;
+    for (i = 0; i < size; i++) {
+        fprintf(file, "%c", row[i] ? 'F' : 'E');
+        fprintf(file, "%c", i == size - 1 ? '.' : ',');
+    }
+    fprintf(file, "\n");
 }
