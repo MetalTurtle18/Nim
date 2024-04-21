@@ -4,11 +4,12 @@
 #define BOARD_BG "\e[48;5;255m"
 #define EMPTY_PIECE "\e[1;38;2;200;200;240m"
 #define FULL_PIECE "\e[1;38;2;50;50;240m"
+#define GAME_END "\e[4;1;38;2;152;195;121m"
 #define NIM "\e[1;4;38;5;166mN\e[1;38;5;142mi\e[1;38;5;117mm\e[0;1;38;2;255;255;255m"
 #define PLAYER "\e[1;91m"
 #define RESET "\e[0;1;38;2;255;255;255m"
 #define ROW_LABEL "\e[1;38;5;161m"
-#define SPACER "--------------------------------------------------------------------------------------------------\n"
+#define SPACER "-------------------------------------------------------------------------\n"
 
 
 
@@ -51,13 +52,17 @@ int main(void) {
 
     printf(RESET"Welcome to "NIM"!\n");
     while (!readyFlag) {
-        printf("What would you like to do?\n1: Start new game\n2: Load game from file\nEnter selection: ");
+        printf("What would you like to do?\n1: Start new game\n2: Load game from file\n3: Start new game against computer\nEnter selection: ");
         scanf("%d", &gameSelection);
         if (gameSelection == 1) {
             printf("Ok. Preparing new game...\n");
             readyFlag = 1;
         } else if (gameSelection == 2) {
             readyFlag = readGame(row0, row1, row2, &player);
+        } else if (gameSelection == 3) {
+            // TODO: set up AI
+        } else {
+            printf("Invalid option. Type a number between 1 and 2");
         }
     }
     while (!gameWon(row0, row1, row2) && !saveGameFlag) {
@@ -83,7 +88,7 @@ int main(void) {
     }
 
     if (!saveGameFlag)
-        printf("Player %c wins!", player ? 'B' : 'A');
+        printf(SPACER GAME_END"Player "PLAYER"%c"GAME_END" took the last piece.\nPlayer "PLAYER"%c"GAME_END" wins!", player ? 'A' : 'B', player ? 'B' : 'A');
 
 
     return 0;
