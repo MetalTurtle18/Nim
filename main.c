@@ -156,6 +156,9 @@ int nimSum(int a, int b) {
     int c = 0;
     int i;
 
+//    a %= 4; //todo
+//    b %= 4;
+
     for (i = 0; i < 3; i++) { // The largest sum possible is 7, which is represented in 3 bits
         c += (a % 2 ^ b % 2) * (int) pow(2, i);
         a >>= 1;
@@ -232,39 +235,79 @@ int writeGame(int row0[3], int row1[5], int row2[7], int player) {
     return 1;
 }
 
-void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pieces) { // TODO: Move selection not yet working
-    int x = nimRowSum(row0, row1, row2);
-    int s1 = rowSum(row0, 3);
-    int xs1 = nimSum(s1, x);
-    int s2, xs2;
-    int s3, xs3;
-    if (xs1 < s1) {
+void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pieces) {
+    int X = nimRowSum(row0, row1, row2);
+    int h1, h2, h3;
+    int h1SumX, h2SumX, h3SumX;
+    if (X == 0) { // This means we are not in a guaranteed winning position; make a dummy move to move the game along
+        *pieces = 1;
+        if (rowSum(row0, 3))
+            *chosenRow = 1;
+        else if (rowSum(row1, 5))
+            *chosenRow = 2;
+        else
+            *chosenRow = 3;
+        return;
+    }
+    // If we get here, the nim sum is nonzero. So there exists a move to make it zero
+
+    h1 = rowSum(row0, 3);
+    h1SumX = nimSum(X, h1);
+
+    h2 = rowSum(row1, 5);
+    h2SumX = nimSum(X, h2);
+
+    h3 = rowSum(row2, 7);
+    h3SumX = nimSum(X, h3);
+
+    if (h1 + h2 + h3 == 1) { // Sorry buddy you lost
+        *pieces = 1;
+        if (h1 > 1)
+            *chosenRow = 1;
+        else if (h2 > 1)
+            *chosenRow = 2;
+        else
+            *chosenRow = 3;
+        return;
+    }
+
+    if (h1 == 1 && h2 == 1 && h3 < 4 || // There are two ones
+        h1 == 1 && h3 == 1 && h2 < 4 || // There are two ones
+        h2 == 1 && h3 == 1 && h1 < 4 || // There are two ones
+        h1 == 0 && h2 == 0 && h3 < 5 || // There is only one heap with pieces
+        h1 == 0 && h3 == 0 && h2 < 5 || // There is only one heap with pieces
+        h2 == 0 && h3 == 0 && h1 < 5) { // There is only one heap with pieces
+        if (h1 > 1) {
+            *chosenRow = 1;
+            *pieces = h1 - 1;
+        } else if (h2 > 1) {
+            *chosenRow = 2;
+            *pieces = h2 - 1;
+        } else {
+            *chosenRow = 3;
+            *pieces = h3 - 1;
+        }
+        return;
+    }
+
+    if (h1SumX < h1 && h1 - h1SumX <= 3) {
         *chosenRow = 1;
-        *pieces = s1 - xs1;
-        return;
-    }
-    s2 = rowSum(row1, 5);
-    xs2 = nimSum(s2, x);
-    if (xs2 < s2) {
+        *pieces = h1 - h1SumX;
+    } else if (h2SumX < h2 && h2 - h2SumX <= 3) {
         *chosenRow = 2;
-        *pieces = s2 - xs2;
-        return;
-    }
-    s3 = rowSum(row2, 7);
-    xs3 = nimSum(s3, x);
-    if (xs3 < s3) {
+        *pieces = h2 - h2SumX;
+    } else if (h3SumX < h3 && h3 - h3SumX <= 3) {
         *chosenRow = 3;
-        *pieces = s3 - xs3;
-        return;
+        *pieces = h3 - h3SumX;
+    } else { // Backup move if there is no way to make the right move
+        *pieces = 1;
+        if (rowSum(row0, 3))
+            *chosenRow = 1;
+        else if (rowSum(row1, 5))
+            *chosenRow = 2;
+        else
+            *chosenRow = 3;
     }
-    // Otherwise, do a failsafe move
-    if (s2 >= s1 && s2 >= s3)
-        *chosenRow = 2;
-    else if (s3 >= s2 && s3 >= s1)
-        *chosenRow = 3;
-    else
-        *chosenRow = 1;
-    *pieces = 1;
 }
 
 void displayBoard(int row0[3], int row1[5], int row2[7]) {
