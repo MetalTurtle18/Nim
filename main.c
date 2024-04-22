@@ -158,54 +158,67 @@ void setUpGame(int row0[3], int row1[5], int row2[7], int *player, int *computer
 void writeRow(FILE *file, int row[], int size);
 
 int main(void) {
+    // Arrays for each row
     int row0[] = {1, 1, 1};
     int row1[] = {1, 1, 1, 1, 1};
     int row2[] = {1, 1, 1, 1, 1, 1, 1};
-    int *row;
-    int aiPlayer;
-    int chosenRow;
-    int pickedRowFlag;
-    int pieces;
-    int computerGame = 0;
-    int player = 0; // 0 = A; 1 = B
-    int saveGameFlag = 0;
+    int *row; // Pointer for passing individual rows to functions
+    int aiPlayer; // Which turn the AI player gets
+    int chosenRow; // Which row the player chose to take from
+    int pickedRowFlag; // Tracks whether the player has successfully picked a row
+    int pieces; // How many pieces the player chose to take
+    int computerGame = 0; // Whether the player is playing against the computer
+    int player = 0; // Which player's turn it is; 0 = A; 1 = B
+    int saveGameFlag = 0; // Tracks whether the player chose to save the game on their most recent input
 
     printf(RESET"Welcome to "NIM"!\n");
 
     setUpGame(row0, row1, row2, &player, &computerGame, &aiPlayer);
 
+    // Loop as long as the game is not won and there user did not choose to save the game
     while (!gameWon(row0, row1, row2) && !saveGameFlag) {
         printf(SPACER);
         displayBoard(row0, row1, row2);
         printf("It is player "PLAYER"%c"RESET"'s turn.\n", player ? 'B' : 'A');
+
+        // This condition ensures the program does not ask for a move if it is the computer's turn
         if (!computerGame || player != aiPlayer) {
             printf("What move would you like to make?\n");
             pickedRowFlag = 0;
 
+            // As long as the move is not successful, continue asking
             while (!getMove(row0, row1, row2, &chosenRow, &pickedRowFlag, &pieces, &saveGameFlag)) {/* none */}
-        } else {
+        } else { // Otherwise, it must be the computer's turn to choose a move
             getAIMove(row0, row1, row2, &chosenRow, &pieces);
         }
-        if (saveGameFlag) {
+
+        if (saveGameFlag) { // If the user chose to save the game in their last move
+            // This condition calls the function to save the game. If it FAILS, then the condition will pass
             if (!writeGame(row0, row1, row2, player)) {
                 saveGameFlag = 0;
-                continue;
+                continue; // Since saving failed, return to the game that was going on
             }
-        } else {
+        } else { // If we got here and the user did not try to save, then they successfully chose a move.
             printf("Player "PLAYER"%c"RESET" will remove "PIECES"%d"RESET" pieces from "ROW_LABEL"Row %d"RESET"\n",
                    player ? 'B' : 'A', pieces, chosenRow);
-            row = chosenRow == 1 ? row0
-                                 : (chosenRow == 2 ? row1
-                                                   : row2);
-            removePieces(row, pieces);
-            player = !player;
+
+            // Translate the rows from 1 indexed (user-facing) to the real variable names
+            if (chosenRow == 1)
+                row = row0;
+            else if (chosenRow == 2)
+                row = row1;
+            else
+                row = row2;
+
+            removePieces(row, pieces); // Execute the move
+
+            player = !player; // Switch which player's turn it is
         }
     }
 
-    if (!saveGameFlag)
+    if (!saveGameFlag) // The game loop can exit if the user saves or if the game ends; only print if game is over.
         printf(SPACER GAME_END"Player "PLAYER"%c"GAME_END" took the last piece.\nPlayer "PLAYER"%c"GAME_END" wins!",
                player ? 'A' : 'B', player ? 'B' : 'A');
-
 
     return 0;
 }
