@@ -14,7 +14,6 @@
 #define ROW_LABEL "\e[1;38;5;161m"
 #define SPACER "-------------------------------------------------------------------------\n"
 
-
 int gameWon(int row0[3], int row1[5], int row2[7]);
 
 int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRowFlag, int *pieces, int *saveFlag);
@@ -52,13 +51,13 @@ int main(void) {
     int row1[] = {1, 1, 1, 1, 1};
     int row2[] = {1, 1, 1, 1, 1, 1, 1};
     int *row;
+    int aiPlayer;
     int chosenRow;
     int pickedRowFlag;
     int pieces;
     int computerGame = 0;
     int player = 0; // 0 = A; 1 = B
     int saveGameFlag = 0;
-    int aiPlayer;
 
     printf(RESET"Welcome to "NIM"!\n");
 
@@ -72,7 +71,7 @@ int main(void) {
             printf("What move would you like to make?\n");
             pickedRowFlag = 0;
 
-            while (!getMove(row0, row1, row2, &chosenRow, &pickedRowFlag, &pieces, &saveGameFlag)) {}
+            while (!getMove(row0, row1, row2, &chosenRow, &pickedRowFlag, &pieces, &saveGameFlag)) {/* none */}
         } else {
             getAIMove(row0, row1, row2, &chosenRow, &pieces);
         }
@@ -156,9 +155,6 @@ int nimSum(int a, int b) {
     int c = 0;
     int i;
 
-//    a %= 4; //todo
-//    b %= 4;
-
     for (i = 0; i < 3; i++) { // The largest sum possible is 7, which is represented in 3 bits
         c += (a % 2 ^ b % 2) * (int) pow(2, i);
         a >>= 1;
@@ -239,6 +235,7 @@ void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *piece
     int X = nimRowSum(row0, row1, row2);
     int h1, h2, h3;
     int h1SumX, h2SumX, h3SumX;
+
     if (X == 0) { // This means we are not in a guaranteed winning position; make a dummy move to move the game along
         *pieces = 1;
         if (rowSum(row0, 3))
