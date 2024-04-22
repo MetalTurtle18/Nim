@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 // Define color codes/text placeholders
@@ -7,6 +8,7 @@
 #define FULL_PIECE "\e[1;38;2;50;50;240m"
 #define GAME_END "\e[4;1;38;2;152;195;121m"
 #define NIM "\e[1;4;38;5;166mN\e[1;38;5;142mi\e[1;38;5;117mm\e[0;1;38;2;255;255;255m"
+#define PIECES "\e[1;95m"
 #define PLAYER "\e[1;91m"
 #define RESET "\e[0;1;38;2;255;255;255m"
 #define ROW_LABEL "\e[1;38;5;161m"
@@ -23,7 +25,7 @@ int nimRowSum(int row0[3], int row1[5], int row2[7]);
 
 int nimSum(int a, int b);
 
-int readGame(int row0[3], int row1[5], int row2[7], int *player); // TODO: implement game reading
+int readGame(int row0[3], int row1[5], int row2[7], int *player);
 
 int rowSum(int row[], int size);
 
@@ -31,11 +33,17 @@ int writeGame(int row0[3], int row1[5], int row2[7], int player);
 
 void displayBoard(int row0[3], int row1[5], int row2[7]);
 
+void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pieces);
+
 void printRow(int row[], int number, int size);
 
 void readRow(FILE *file, int row[]);
 
 void removePieces(int row[], int pieces);
+
+void setUpAI(int *aiPlayer);
+
+void setUpGame(int row0[3], int row1[5], int row2[7], int *player, int *computerGame, int *aiPlayer);
 
 void writeRow(FILE *file, int row[], int size);
 
@@ -44,45 +52,38 @@ int main(void) {
     int row1[] = {1, 1, 1, 1, 1};
     int row2[] = {1, 1, 1, 1, 1, 1, 1};
     int *row;
-    int player = 0; // 0 = A; 1 = B
     int chosenRow;
-    int pieces;
-    int saveGameFlag = 0;
     int pickedRowFlag;
-    int gameSelection;
-    int readyFlag = 0;
-
-    // TODO: Implement compete against CPU feature
+    int pieces;
+    int computerGame = 0;
+    int player = 0; // 0 = A; 1 = B
+    int saveGameFlag = 0;
+    int aiPlayer;
 
     printf(RESET"Welcome to "NIM"!\n");
-    while (!readyFlag) {
-        printf("What would you like to do?\n1: Start new game\n2: Load game from file\n3: Start new game against computer\nEnter selection: ");
-        scanf("%d", &gameSelection);
-        if (gameSelection == 1) {
-            printf("Ok. Preparing new game...\n");
-            readyFlag = 1;
-        } else if (gameSelection == 2) {
-            readyFlag = readGame(row0, row1, row2, &player);
-        } else if (gameSelection == 3) {
-            // TODO: set up AI
-        } else {
-            printf("Invalid option. Type a number between 1 and 2");
-        }
-    }
+
+    setUpGame(row0, row1, row2, &player, &computerGame, &aiPlayer);
+
     while (!gameWon(row0, row1, row2) && !saveGameFlag) {
         printf(SPACER);
         displayBoard(row0, row1, row2);
         printf("It is player "PLAYER"%c"RESET"'s turn.\n", player ? 'B' : 'A');
-        printf("What move would you like to make?\n");
-        pickedRowFlag = 0;
+        if (!computerGame || player != aiPlayer) {
+            printf("What move would you like to make?\n");
+            pickedRowFlag = 0;
 
-        while (!getMove(row0, row1, row2, &chosenRow, &pickedRowFlag, &pieces, &saveGameFlag)) {}
+            while (!getMove(row0, row1, row2, &chosenRow, &pickedRowFlag, &pieces, &saveGameFlag)) {}
+        } else {
+            getAIMove(row0, row1, row2, &chosenRow, &pieces);
+        }
         if (saveGameFlag) {
             if (!writeGame(row0, row1, row2, player)) {
                 saveGameFlag = 0;
                 continue;
             }
         } else {
+            printf("Player "PLAYER"%c"RESET" will remove "PIECES"%d"RESET" pieces from "ROW_LABEL"Row %d"RESET"\n",
+                   player ? 'B' : 'A', pieces, chosenRow);
             row = chosenRow == 1 ? row0
                                  : (chosenRow == 2 ? row1
                                                    : row2);
@@ -231,6 +232,41 @@ int writeGame(int row0[3], int row1[5], int row2[7], int player) {
     return 1;
 }
 
+void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pieces) { // TODO: Move selection not yet working
+    int x = nimRowSum(row0, row1, row2);
+    int s1 = rowSum(row0, 3);
+    int xs1 = nimSum(s1, x);
+    int s2, xs2;
+    int s3, xs3;
+    if (xs1 < s1) {
+        *chosenRow = 1;
+        *pieces = s1 - xs1;
+        return;
+    }
+    s2 = rowSum(row1, 5);
+    xs2 = nimSum(s2, x);
+    if (xs2 < s2) {
+        *chosenRow = 2;
+        *pieces = s2 - xs2;
+        return;
+    }
+    s3 = rowSum(row2, 7);
+    xs3 = nimSum(s3, x);
+    if (xs3 < s3) {
+        *chosenRow = 3;
+        *pieces = s3 - xs3;
+        return;
+    }
+    // Otherwise, do a failsafe move
+    if (s2 >= s1 && s2 >= s3)
+        *chosenRow = 2;
+    else if (s3 >= s2 && s3 >= s1)
+        *chosenRow = 3;
+    else
+        *chosenRow = 1;
+    *pieces = 1;
+}
+
 void displayBoard(int row0[3], int row1[5], int row2[7]) {
     printRow(row0, 1, 3);
     printRow(row1, 2, 5);
@@ -272,6 +308,56 @@ void removePieces(int row[], int pieces) {
         removed += row[i];
         row[i] = 0;
         i++;
+    }
+}
+
+void setUpAI(int *aiPlayer) {
+    int input;
+
+    printf(SPACER);
+
+    while (1) {
+        printf("Who goes first?\n1: I go first\n2: Computer goes first\n3: Randomize\nEnter selection: ");
+        scanf("%d", &input);
+        if (input == 1) {
+            printf("Ok. You are player "PLAYER"A"RESET".  Preparing new game...\n");
+            *aiPlayer = 1;
+        } else if (input == 2) {
+            printf("Ok. You are player "PLAYER"B"RESET".  Preparing new game...\n");
+            *aiPlayer = 0;
+        } else if (input == 3) {
+            *aiPlayer = rand() % 2;
+            printf("Ok. You are player "PLAYER"%c"RESET".  Preparing new game...\n", *aiPlayer ? 'A' : 'B');
+        } else {
+            printf("Invalid option. Type a number between 1 and 3\n");
+            continue;
+        }
+        break;
+    }
+}
+
+void setUpGame(int row0[3], int row1[5], int row2[7], int *player, int *computerGame, int *aiPlayer) {
+    int input;
+
+    printf(SPACER);
+
+    while (1) {
+        printf("What would you like to do?\n1: Start new game\n2: Load game from file\n3: Start new game against computer\nEnter selection: ");
+        scanf("%d", &input);
+        if (input == 1) {
+            printf("Ok. Preparing new game...\n");
+        } else if (input == 2) {
+            if (!readGame(row0, row1, row2, player))
+                continue;
+        } else if (input == 3) {
+            printf("Ok. Preparing new game against computer...\n");
+            *computerGame = 1;
+            setUpAI(aiPlayer);
+        } else {
+            printf("Invalid option. Type a number between 1 and 3\n");
+            continue;
+        }
+        break;
     }
 }
 
