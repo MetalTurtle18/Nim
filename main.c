@@ -14,36 +14,147 @@
 #define ROW_LABEL "\e[1;38;5;161m"
 #define SPACER "-------------------------------------------------------------------------\n"
 
+/**
+ * Determine if the game is over
+ * @param row0
+ * @param row1
+ * @param row2
+ * @return 1 if the game is over, 0 if not
+ */
 int gameWon(int row0[3], int row1[5], int row2[7]);
 
+/**
+ * Prompt the user for their next move
+ * @param row0
+ * @param row1
+ * @param row2
+ * @param chosenRow address to store the chosen row
+ * @param pickedRowFlag address for flag for whether the user has successfully picked a row
+ * @param pieces address to store the chosen number of pieces to take
+ * @param saveFlag address for flag for whether the user has opted to save the game at this point
+ * @return 1 if the move has been chosen successfully or if the user chose to save the game, 0 otherwise
+ */
 int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRowFlag, int *pieces, int *saveFlag);
 
+/**
+ * Determine whether a given move is legal
+ * @param row0
+ * @param row1
+ * @param row2
+ * @param chosenRow
+ * @param pieces
+ * @return 1 if the move is legal, 0 if not
+ */
 int legalMove(int row0[3], int row1[5], int row2[7], int chosenRow, int pieces);
 
+/**
+ * Calculate the nim sum of three given rows
+ * @param row0
+ * @param row1
+ * @param row2
+ * @return the nim sum
+ */
 int nimRowSum(int row0[3], int row1[5], int row2[7]);
 
+/**
+ * calculate the nim sum of two numbers
+ * @param a
+ * @param b
+ * @return the nim sum
+ */
 int nimSum(int a, int b);
 
+/**
+ * Read a game from a file
+ * @param row0
+ * @param row1
+ * @param row2
+ * @param player address to store the player who is up next read from the file
+ * @return 1 if the file was read successfully, 0 otherwise
+ */
 int readGame(int row0[3], int row1[5], int row2[7], int *player);
 
+/**
+ * Count the number of pieces left in a row
+ * @param row
+ * @param size the total number of pieces that can fit in this row
+ * @return the number of pieces left in the row
+ */
 int rowSum(int row[], int size);
 
+/**
+ * Write the game to a file
+ * @param row0
+ * @param row1
+ * @param row2
+ * @param player the player who is up next
+ * @return 1 if the game was written successfully, 0 otherwise
+ */
 int writeGame(int row0[3], int row1[5], int row2[7], int player);
 
+/**
+ * Pretty print the game board
+ * @param row0
+ * @param row1
+ * @param row2
+ */
 void displayBoard(int row0[3], int row1[5], int row2[7]);
 
+/**
+ * Get the next best legal move in the game
+ * @param row0
+ * @param row1
+ * @param row2
+ * @param chosenRow address to store the chosen row
+ * @param pieces address to store the chosen number of pieces to take
+ */
 void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pieces);
 
+/**
+ * Pretty print a single row
+ * @param row
+ * @param number human-friendly index of the row (1, 2, 3)
+ * @param size the total number of items that fit in this row
+ */
 void printRow(int row[], int number, int size);
 
+/**
+ * Read a single row from a file
+ * @param file address of the file data
+ * @param row the row to save data into
+ */
 void readRow(FILE *file, int row[]);
 
+/**
+ * Remove the given number of pieces from the given row
+ * @param row
+ * @param pieces
+ */
 void removePieces(int row[], int pieces);
 
+/**
+ * Prompt the user for options on how they can play against the computer
+ * @param aiPlayer address of the computer's player number (0 or 1)
+ */
 void setUpAI(int *aiPlayer);
 
+/**
+ * Prompt the user for options on how they can play the game
+ * @param row0
+ * @param row1
+ * @param row2
+ * @param player address of the player who is up (0 or 1)
+ * @param computerGame address of boolean for whether this game is against the computer
+ * @param aiPlayer address of the computer's player number (0 or 1)
+ */
 void setUpGame(int row0[3], int row1[5], int row2[7], int *player, int *computerGame, int *aiPlayer);
 
+/**
+ * Write a single row to a file
+ * @param file address of the file data
+ * @param row the row to write
+ * @param size the number of items that can fit in the row
+ */
 void writeRow(FILE *file, int row[], int size);
 
 int main(void) {
