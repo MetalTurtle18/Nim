@@ -19,7 +19,9 @@ int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRo
 
 int legalMove(int row0[3], int row1[5], int row2[7], int chosenRow, int pieces);
 
-int nimSum(int row0[3], int row1[5], int row2[7]);
+int nimRowSum(int row0[3], int row1[5], int row2[7]);
+
+int nimSum(int a, int b);
 
 int readGame(int row0[3], int row1[5], int row2[7], int *player); // TODO: implement game reading
 
@@ -90,7 +92,8 @@ int main(void) {
     }
 
     if (!saveGameFlag)
-        printf(SPACER GAME_END"Player "PLAYER"%c"GAME_END" took the last piece.\nPlayer "PLAYER"%c"GAME_END" wins!", player ? 'A' : 'B', player ? 'B' : 'A');
+        printf(SPACER GAME_END"Player "PLAYER"%c"GAME_END" took the last piece.\nPlayer "PLAYER"%c"GAME_END" wins!",
+               player ? 'A' : 'B', player ? 'B' : 'A');
 
 
     return 0;
@@ -140,20 +143,25 @@ int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRo
     return 1;
 }
 
-int nimSum(int row0[3], int row1[5], int row2[7]) {
+int nimRowSum(int row0[3], int row1[5], int row2[7]) {
     int a = rowSum(row0, 3);
     int b = rowSum(row1, 5);
     int c = rowSum(row2, 7);
-    int nimSum = 0;
+
+    return nimSum(nimSum(a, b), c);
+}
+
+int nimSum(int a, int b) {
+    int c = 0;
     int i;
 
     for (i = 0; i < 3; i++) { // The largest sum possible is 7, which is represented in 3 bits
-        nimSum += (a % 2 + b % 2 + c % 2) % 2 * (int) pow(2, i);
-        a = a >> 1;
-        b = b >> 1;
-        c = c >> 1;
+        c += (a % 2 ^ b % 2) * (int) pow(2, i);
+        a >>= 1;
+        b >>= 1;
     }
-    return (int) nimSum;
+
+    return c;
 }
 
 int readGame(int row0[3], int row1[5], int row2[7], int *player) {
