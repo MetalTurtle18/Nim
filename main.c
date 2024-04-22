@@ -368,17 +368,19 @@ void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *piece
     int h1SumX, h2SumX, h3SumX;
 
     if (X == 0) { // This means we are not in a guaranteed winning position; make a dummy move to move the game along
-        *pieces = 1;
+        *pieces = 1; // Only take one piece
+        // Take it from whichever row has a piece to be taken
         if (rowSum(row0, 3))
             *chosenRow = 1;
         else if (rowSum(row1, 5))
             *chosenRow = 2;
         else
             *chosenRow = 3;
-        return;
+        return; // Then exit the function
     }
-    // If we get here, the nim sum is nonzero. So there exists a move to make it zero
+    // If we get here, the nim sum is nonzero. So there exists a move to make it zero...
 
+    // Calculate important values for checks
     h1 = rowSum(row0, 3);
     h1SumX = nimSum(X, h1);
 
@@ -388,8 +390,9 @@ void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *piece
     h3 = rowSum(row2, 7);
     h3SumX = nimSum(X, h3);
 
-    if (h1 + h2 + h3 == 1) { // Sorry buddy you lost
+    if (h1 + h2 + h3 == 1) { // Sorry buddy you lost (there is only one piece)
         *pieces = 1;
+        // Figure out which row has the last piece and take it :(
         if (h1 > 1)
             *chosenRow = 1;
         else if (h2 > 1)
@@ -398,13 +401,16 @@ void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *piece
             *chosenRow = 3;
         return;
     }
+    // Now checks for various cases
 
+    // Lots of checks for specific conditions
     if (h1 == 1 && h2 == 1 && h3 < 4 || // There are two ones
         h1 == 1 && h3 == 1 && h2 < 4 || // There are two ones
         h2 == 1 && h3 == 1 && h1 < 4 || // There are two ones
         h1 == 0 && h2 == 0 && h3 < 5 || // There is only one heap with pieces
         h1 == 0 && h3 == 0 && h2 < 5 || // There is only one heap with pieces
         h2 == 0 && h3 == 0 && h1 < 5) { // There is only one heap with pieces
+        // Make the proper move to get the game into a winning position
         if (h1 > 1) {
             *chosenRow = 1;
             *pieces = h1 - 1;
@@ -418,6 +424,7 @@ void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *piece
         return;
     }
 
+    // Standard strategy calculations now to get nimSum back to 0
     if (h1SumX < h1 && h1 - h1SumX <= 3) {
         *chosenRow = 1;
         *pieces = h1 - h1SumX;
@@ -427,7 +434,8 @@ void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *piece
     } else if (h3SumX < h3 && h3 - h3SumX <= 3) {
         *chosenRow = 3;
         *pieces = h3 - h3SumX;
-    } else { // Backup move if there is no way to make the right move
+    } else { // Backup move if there is no way to make the right move (if the proper move would be more than 3 pieces)
+        // Similar to the top of the function, just take one from whichever heap is first up and available
         *pieces = 1;
         if (rowSum(row0, 3))
             *chosenRow = 1;
