@@ -224,8 +224,9 @@ int main(void) {
 }
 
 int legalMove(int row0[3], int row1[5], int row2[7], int row, int pieces) {
-    if (pieces > 3 || pieces < 0 || row > 3 || row < 0)
+    if (pieces > 3 || pieces < 0 || row > 3 || row < 0) // First check if the choices are in max bounds
         return 0;
+    // Then check if there are enough pieces left in the chosen row
     switch (row) {
         case 1:
             return rowSum(row0, 3) >= pieces;
@@ -241,30 +242,32 @@ int gameWon(int row0[3], int row1[5], int row2[7]) {
             rowSum(row0, 3) +
             rowSum(row1, 5) +
             rowSum(row2, 7);
-    return sum == 0;
+    return sum == 0; // The game is over if all pieces are gone. Simplest check is to sum all pieces.
 }
 
 int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRowFlag, int *pieces, int *saveFlag) {
-    if (!*pickedRowFlag) {
-        printf("Enter the row you would like to take from: ");
+    if (!*pickedRowFlag) { // This check ensures the program does not prompt the user to enter the row again
+        printf("Enter the row you would like to take from (or -1 to save the game): ");
         scanf("%d", chosenRow);
-        if (*chosenRow < 0) {
+        if (*chosenRow < 0) { // If the user enters -1 (or any negative number), initiate game saving
             *saveFlag = 1;
-            return 1;
+            return 1; // Return 1 to break out of the game loop in the main function
         }
-        if (!legalMove(row0, row1, row2, *chosenRow, 1)) {
+        if (!legalMove(row0, row1, row2, *chosenRow, 1)) { // If the move is invalid, tell the user
             printf("Invalid row!\n");
-            return 0;
+            return 0; // Go back to the main loop and return 0 so that it repeats.
         }
+        // If the other conditions are not met, then the move is legal. Set flag to not ask the user for a row again
         *pickedRowFlag = 1;
     }
+    // Now, get the number of pieces
     printf("Enter the number of pieces you would like to take from row %d: ", *chosenRow);
     scanf("%d", pieces);
-    if (!legalMove(row0, row1, row2, *chosenRow, *pieces)) {
+    if (!legalMove(row0, row1, row2, *chosenRow, *pieces)) { // Similar invalid check as above
         printf("Invalid move!\n");
         return 0;
     }
-    return 1;
+    return 1; // If all is well, return 1 and move on
 }
 
 int nimRowSum(int row0[3], int row1[5], int row2[7]) {
@@ -272,6 +275,7 @@ int nimRowSum(int row0[3], int row1[5], int row2[7]) {
     int b = rowSum(row1, 5);
     int c = rowSum(row2, 7);
 
+    // To get the num sum of three numbers, take the nim sum of two and then the sum of that with the third
     return nimSum(nimSum(a, b), c);
 }
 
@@ -280,9 +284,10 @@ int nimSum(int a, int b) {
     int i;
 
     for (i = 0; i < 3; i++) { // The largest sum possible is 7, which is represented in 3 bits
+        // In c, i bits from the right, set it to 1 IF there is exactly one 1 between a & b in the i bit from the right
         c += (a % 2 ^ b % 2) * (int) pow(2, i);
-        a >>= 1;
-        b >>= 1;
+        a >>= 1; // Right shift to move onto the next bit
+        b >>= 1; // Right shift to move onto the next bit
     }
 
     return c;
@@ -290,25 +295,26 @@ int nimSum(int a, int b) {
 
 int readGame(int row0[3], int row1[5], int row2[7], int *player) {
     FILE *file;
-    char fileName[31];
+    char fileName[31]; // String to store the user-entered file name
     char playerChar;
     printf(SPACER);
     printf("Reading Game from File\n");
     printf("Enter the name of the file you would like to load the game from (30 character limit): ");
     scanf("%30s", fileName);
-    file = fopen(fileName, "r");
+    file = fopen(fileName, "r"); // Try opening the file the user gave
 
-    if (file == NULL) {
+    if (file == NULL) { // If the file does not exist...
         printf("There is no file called %s. Returning to main menu...\n", fileName);
         printf(SPACER);
-        return 0;
+        return 0; // Return to the main loop as a failure
     }
 
+    // Otherwise, if the file does exist, read it row by row
     readRow(file, row0);
     readRow(file, row1);
     readRow(file, row2);
     fscanf(file, "%c", &playerChar);
-    *player = playerChar == 'B';
+    *player = playerChar == 'B'; // Set the player boolean from the file
 
     fclose(file);
     return 1;
@@ -318,33 +324,34 @@ int rowSum(int row[], int size) {
     int sum = 0;
     int i;
     for (i = 0; i < size; i++)
-        sum += row[i];
+        sum += row[i]; // Add to the sum if this index of the array is 1
     return sum;
 }
 
 int writeGame(int row0[3], int row1[5], int row2[7], int player) {
     FILE *file;
-    char fileName[31];
-    char createNewFile;
+    char fileName[31]; // String to store the user-entered file name
+    char createNewFile; // To get input from the user later
     printf(SPACER);
     printf("Saving Game to File\n");
     printf("Enter the name of the file you would like to save this game to (this will overwrite existing files) (30 character limit): ");
     scanf("%30s", fileName);
-    file = fopen(fileName, "r");
+    file = fopen(fileName, "r"); // FIRST try to open the file in read mode to see if it exists
 
-    if (file == NULL) {
+    if (file == NULL) { // If it does not exist, give the user the option to create it
         printf("There is no file called %s. Do you want to create it? (Y/n) ", fileName);
         scanf(" %c", &createNewFile);
-        if (createNewFile != 'y' && createNewFile != 'Y') {
+        if (createNewFile != 'y' && createNewFile != 'Y') { // If the user DOES NOT enter yes, return to the game
             printf("Returning to game...\n");
-            return 0;
+            return 0; // Return 0 because the file was not saved
         }
-    } else {
+    } else { // Otherwise, make sure to close the file before the next step
         fclose(file);
     }
 
-    file = fopen(fileName, "w");
+    file = fopen(fileName, "w"); // NOW open it in write mode. If it did not exist before, it will be created
 
+    // Write to the file row by row
     writeRow(file, row0, 3);
     writeRow(file, row1, 5);
     writeRow(file, row2, 7);
@@ -439,39 +446,41 @@ void displayBoard(int row0[3], int row1[5], int row2[7]) {
 
 void printRow(int *row, int number, int size) {
     int i;
-    printf(ROW_LABEL"Row %d%*c"RESET, number, 10 - size, ' ');
+    printf(ROW_LABEL"Row %d%*c"RESET, number, 10 - size, ' '); // The label on the left ("Row 1")
     for (i = 0; i < size; i++) {
-        if (*(row + i))
-            printf(BOARD_BG" "FULL_PIECE"■"RESET);
+        if (*(row + i)) // Dereference the correct index of the array
+            printf(BOARD_BG" "FULL_PIECE"■"RESET); // Print with the full color
         else
-            printf(BOARD_BG" "EMPTY_PIECE"■"RESET);
+            printf(BOARD_BG" "EMPTY_PIECE"■"RESET); // Print with the empty color
     }
-    printf(BOARD_BG" "RESET"\n");
+    printf(BOARD_BG" "RESET"\n"); // After each row, make sure to move to the next line
 }
 
 void readRow(FILE *file, int row[]) {
     char c = ' ';
     int i = 0;
-    while (c != '.') {
+    while (c != '.') { // As long as we do not reach the end marker, which is a period
         fscanf(file, "%c", &c);
-        if (c == ',')
+        if (c == ',') // If this character is a comma, move on without doing anything because this separates items
             continue;
-        else if (c == 'E')
+        else if (c == 'E') // If E, set as 0 for empty
             row[i] = 0;
-        else if (c == 'F')
+        else if (c == 'F') // If F, set as 1 for full
             row[i] = 1;
-        i++;
+        i++; // This will not increment when the character is a comma
     }
+
+    // Move the cursor over one character to skip the newline and prepare for the next call of this function
     fseek(file, sizeof(char), SEEK_CUR);
 }
 
 void removePieces(int row[], int pieces) {
-    int removed = 0;
+    int removed = 0; // Track how many pieces have actually been removed
     int i = 0;
-    while (removed < pieces) {
-        removed += row[i];
+    while (removed < pieces) { // Go until the right number of pieces has been removed
+        removed += row[i]; // Removed will only increase if there was actually something there to remove
         row[i] = 0;
-        i++;
+        i++; // Move over one place in the array each time regardless
     }
 }
 
@@ -480,23 +489,23 @@ void setUpAI(int *aiPlayer) {
 
     printf(SPACER);
 
-    while (1) {
+    while (1) { // Loop until broken
         printf("Who goes first?\n1: I go first\n2: Computer goes first\n3: Randomize\nEnter selection: ");
         scanf("%d", &input);
-        if (input == 1) {
+        if (input == 1) { // If 1, the human player goes first
             printf("Ok. You are player "PLAYER"A"RESET".  Preparing new game...\n");
-            *aiPlayer = 1;
-        } else if (input == 2) {
+            *aiPlayer = 1; // Set the computer to be player B
+        } else if (input == 2) { // If 2, the computer goes first
             printf("Ok. You are player "PLAYER"B"RESET".  Preparing new game...\n");
-            *aiPlayer = 0;
-        } else if (input == 3) {
-            *aiPlayer = rand() % 2;
+            *aiPlayer = 0; // Set the computer to be player A
+        } else if (input == 3) { // If 3, pick a random number to determine who goes first
+            *aiPlayer = rand() % 2; // Modulo 2 to get a number between 0 and 1
             printf("Ok. You are player "PLAYER"%c"RESET".  Preparing new game...\n", *aiPlayer ? 'A' : 'B');
-        } else {
+        } else { // If the user gave an invalid option, go back to the start of the loop using continue
             printf("Invalid option. Type a number between 1 and 3\n");
             continue;
         }
-        break;
+        break; // If the program gets here, an option was chosen successfully, and the loop can break
     }
 }
 
@@ -505,31 +514,31 @@ void setUpGame(int row0[3], int row1[5], int row2[7], int *player, int *computer
 
     printf(SPACER);
 
-    while (1) {
+    while (1) { // Loop until broken
         printf("What would you like to do?\n1: Start new game\n2: Load game from file\n3: Start new game against computer\nEnter selection: ");
         scanf("%d", &input);
-        if (input == 1) {
+        if (input == 1) { // If 1, nothing to do here except go back to the main loop and get started
             printf("Ok. Preparing new game...\n");
-        } else if (input == 2) {
-            if (!readGame(row0, row1, row2, player))
-                continue;
-        } else if (input == 3) {
+        } else if (input == 2) { // If 2, attempt to read a game from a file
+            if (!readGame(row0, row1, row2, player)) // If the read fails and returns 0...
+                continue; // Go back to the start of this loop and prompt the user for an option again with continue
+        } else if (input == 3) { // If 3, set the computer game flag and prompt the user for computer options
             printf("Ok. Preparing new game against computer...\n");
             *computerGame = 1;
             setUpAI(aiPlayer);
-        } else {
+        } else { // If the user gave an invalid option, go back to the start of the loop using continue
             printf("Invalid option. Type a number between 1 and 3\n");
             continue;
         }
-        break;
+        break; // If the program gets here, an option was chosen successfully, and the loop can break
     }
 }
 
 void writeRow(FILE *file, int row[], int size) {
     int i;
-    for (i = 0; i < size; i++) {
-        fprintf(file, "%c", row[i] ? 'F' : 'E');
-        fprintf(file, "%c", i == size - 1 ? '.' : ',');
+    for (i = 0; i < size; i++) { // For each item in the array
+        fprintf(file, "%c", row[i] ? 'F' : 'E'); // First, print an F or E depending on whether a piece is there
+        fprintf(file, "%c", i == size - 1 ? '.' : ','); // Then, print a comma, or, if this is the last item, a period
     }
-    fprintf(file, "\n");
+    fprintf(file, "\n"); // Print a newline at the end to prepare for the next line to be written
 }
