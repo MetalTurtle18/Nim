@@ -48,21 +48,13 @@ int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRo
 int legalMove(int row0[3], int row1[5], int row2[7], int chosenRow, int pieces);
 
 /**
- * Calculate the nim sum of three given rows
+ * Calculate the nim sum of three given rows (same thing as XOR)
  * @param row0
  * @param row1
  * @param row2
  * @return the nim sum
  */
-int nimRowSum(int row0[3], int row1[5], int row2[7]);
-
-/**
- * calculate the nim sum of two numbers
- * @param a
- * @param b
- * @return the nim sum
- */
-int nimSum(int a, int b);
+int nimSum(int row0[3], int row1[5], int row2[7]);
 
 /**
  * Read a game from a file
@@ -99,6 +91,16 @@ int writeGame(int row0[3], int row1[5], int row2[7], int player);
  * @param row2
  */
 void displayBoard(int row0[3], int row1[5], int row2[7]);
+
+/**
+ * Make the first allowed move given the rows
+ * @param row0
+ * @param row1
+ * @param row2
+ * @param chosenRow address to store the chosen row
+ * @param pieces address to store the chosen number of pieces to take
+ */
+void firstAvailableMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pieces);
 
 /**
  * Get the next best legal move in the game
@@ -270,27 +272,13 @@ int getMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pickedRo
     return 1; // If all is well, return 1 and move on
 }
 
-int nimRowSum(int row0[3], int row1[5], int row2[7]) {
+int nimSum(int row0[3], int row1[5], int row2[7]) {
     int a = rowSum(row0, 3);
     int b = rowSum(row1, 5);
     int c = rowSum(row2, 7);
 
-    // To get the num sum of three numbers, take the nim sum of two and then the sum of that with the third
-    return nimSum(nimSum(a, b), c);
-}
-
-int nimSum(int a, int b) {
-    int c = 0;
-    int i;
-
-    for (i = 0; i < 3; i++) { // The largest sum possible is 7, which is represented in 3 bits
-        // In c, i bits from the right, set it to 1 IF there is exactly one 1 between a & b in the i bit from the right
-        c += (a % 2 ^ b % 2) * (int) pow(2, i);
-        a >>= 1; // Right shift to move onto the next bit
-        b >>= 1; // Right shift to move onto the next bit
-    }
-
-    return c;
+    // To get the nim sum of three numbers, take the nim sum of two and then the sum of that with the third
+    return (a ^ b) ^ c;
 }
 
 int readGame(int row0[3], int row1[5], int row2[7], int *player) {
@@ -362,54 +350,62 @@ int writeGame(int row0[3], int row1[5], int row2[7], int player) {
     return 1;
 }
 
+void firstAvailableMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pieces) {
+    *pieces = 1; // Only take one piece
+    // Take it from whichever row has a piece to be taken
+    if (rowSum(row0, 3))
+        *chosenRow = 1;
+    else if (rowSum(row1, 5))
+        *chosenRow = 2;
+    else
+        *chosenRow = 3;
+}
+
 void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *pieces) {
-    int X = nimRowSum(row0, row1, row2);
+    int X = nimSum(row0, row1, row2);
     int h1, h2, h3;
     int h1SumX, h2SumX, h3SumX;
 
-    if (X == 0) { // This means we are not in a guaranteed winning position; make a dummy move to move the game along
-        *pieces = 1; // Only take one piece
-        // Take it from whichever row has a piece to be taken
-        if (rowSum(row0, 3))
-            *chosenRow = 1;
-        else if (rowSum(row1, 5))
-            *chosenRow = 2;
-        else
-            *chosenRow = 3;
-        return; // Then exit the function
-    }
-    // If we get here, the nim sum is nonzero. So there exists a move to make it zero...
+    if (X == 0) // This means we are not in a guaranteed winning position; make a dummy move to move the game along
+        return firstAvailableMove(row0, row1, row2, chosenRow, pieces); // Call and exit
 
     // Calculate important values for checks
     h1 = rowSum(row0, 3);
-    h1SumX = nimSum(X, h1);
+    h1SumX = X ^ h1;
 
     h2 = rowSum(row1, 5);
-    h2SumX = nimSum(X, h2);
+    h2SumX = X ^ h2;
 
     h3 = rowSum(row2, 7);
-    h3SumX = nimSum(X, h3);
+    h3SumX = X ^ h3;
 
-    if (h1 + h2 + h3 == 1) { // Sorry buddy you lost (there is only one piece)
-        *pieces = 1;
-        // Figure out which row has the last piece and take it :(
-        if (h1 > 1)
+    if (h1 + h2 + h3 == 1 || h1 == 1 && h2 == 1 && h3 == 1) // Sorry buddy you lost (there is no way to win)
+        return firstAvailableMove(row0, row1, row2, chosenRow, pieces);
+
+    // Special cases 1
+    if (h1 + h2 == 1 && h3 < 4 || // There is a one, a zero, and something else
+        h1 + h3 == 1 && h2 < 4 || // There is a one, a zero, and something else
+        h2 + h3 == 1 && h1 < 4) { // There is a one, a zero, and something else
+        if (h1 > 1) {
             *chosenRow = 1;
-        else if (h2 > 1)
+            *pieces = h1;
+        } else if (h2 > 1) {
             *chosenRow = 2;
-        else
+            *pieces = h2;
+        } else {
             *chosenRow = 3;
+            *pieces = h3;
+        }
         return;
     }
-    // Now checks for various cases
 
-    // Lots of checks for specific conditions
-    if (h1 == 1 && h2 == 1 && h3 < 4 || // There are two ones
-        h1 == 1 && h3 == 1 && h2 < 4 || // There are two ones
-        h2 == 1 && h3 == 1 && h1 < 4 || // There are two ones
-        h1 == 0 && h2 == 0 && h3 < 5 || // There is only one heap with pieces
-        h1 == 0 && h3 == 0 && h2 < 5 || // There is only one heap with pieces
-        h2 == 0 && h3 == 0 && h1 < 5) { // There is only one heap with pieces
+    // Special cases 2
+    if (h1 == 1 && h2 == 1 && h3 < 4 || // There are two ones and something else
+        h1 == 1 && h3 == 1 && h2 < 4 || // There are two ones and something else
+        h2 == 1 && h3 == 1 && h1 < 4 || // There are two ones and something else
+        h1 == 0 && h2 == 0 && h3 < 5 || // There are two zeros and something else
+        h1 == 0 && h3 == 0 && h2 < 5 || // There are two zeros and something else
+        h2 == 0 && h3 == 0 && h1 < 5) { // There are two zeros and something else
         // Make the proper move to get the game into a winning position
         if (h1 > 1) {
             *chosenRow = 1;
@@ -425,24 +421,17 @@ void getAIMove(int row0[3], int row1[5], int row2[7], int *chosenRow, int *piece
     }
 
     // Standard strategy calculations now to get nimSum back to 0
-    if (h1SumX < h1 && h1 - h1SumX <= 3) {
+    if (h1SumX <= h1 && h1 - h1SumX <= 3) {
         *chosenRow = 1;
         *pieces = h1 - h1SumX;
-    } else if (h2SumX < h2 && h2 - h2SumX <= 3) {
+    } else if (h2SumX <= h2 && h2 - h2SumX <= 3) {
         *chosenRow = 2;
         *pieces = h2 - h2SumX;
-    } else if (h3SumX < h3 && h3 - h3SumX <= 3) {
+    } else if (h3SumX <= h3 && h3 - h3SumX <= 3) {
         *chosenRow = 3;
         *pieces = h3 - h3SumX;
     } else { // Backup move if there is no way to make the right move (if the proper move would be more than 3 pieces)
-        // Similar to the top of the function, just take one from whichever heap is first up and available
-        *pieces = 1;
-        if (rowSum(row0, 3))
-            *chosenRow = 1;
-        else if (rowSum(row1, 5))
-            *chosenRow = 2;
-        else
-            *chosenRow = 3;
+        firstAvailableMove(row0, row1, row2, chosenRow, pieces);
     }
 }
 
