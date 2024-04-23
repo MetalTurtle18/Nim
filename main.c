@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <time.h>
 
 // Define color codes/text placeholders
 #define BOARD_BG "\e[48;5;255m"
@@ -496,6 +496,7 @@ void setUpAI(int *aiPlayer) {
             printf("Ok. You are player "PLAYER"B"RESET".  Preparing new game...\n");
             *aiPlayer = 0; // Set the computer to be player A
         } else if (input == 3) { // If 3, pick a random number to determine who goes first
+            srand(time(NULL));
             *aiPlayer = rand() % 2; // Modulo 2 to get a number between 0 and 1
             printf("Ok. You are player "PLAYER"%c"RESET".  Preparing new game...\n", *aiPlayer ? 'A' : 'B');
         } else { // If the user gave an invalid option, go back to the start of the loop using continue
@@ -544,6 +545,7 @@ void writeRow(FILE *file, int row[], int size) {
 * External Sources
 * [Stack Overflow](https://stackoverflow.com/questions/8464620/program-doesnt-wait-for-user-input-with-scanfc-yn) on bug with scanf after using scanf to get string input from user
 * [Stack Overflow](https://stackoverflow.com/questions/32674141/if-file-pointer-is-null-do-i-have-to-use-fclose-c) on bug only in Repl.it of files not being created
+* [Stack Overflow](https://stackoverflow.com/questions/9711076/why-does-rand-always-return-the-same-value) on random number generation
 * [cppreference.com](https://en.cppreference.com/w/c/io/fseek) on specifics of fseek
 * [Wikipedia](https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit) on ANSI escape codes for colored text
 * [Wikipedia](https://en.wikipedia.org/wiki/Nim#Proof_of_the_winning_formula) Nim mathematical strategy
