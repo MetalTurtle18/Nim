@@ -2,4 +2,5 @@
 * [Stack Overflow](https://stackoverflow.com/questions/8464620/program-doesnt-wait-for-user-input-with-scanfc-yn) on bug with scanf after using scanf to get string input from user ([line 343](https://github.com/MetalTurtle18/Nim/blob/02ee2ad13af9d96d95f22edaa949e2e326ffd725/main.c#L343))
 * [Stack Overflow](https://stackoverflow.com/questions/32674141/if-file-pointer-is-null-do-i-have-to-use-fclose-c) on bug only in Repl.it of files not being created ([line 348](https://github.com/MetalTurtle18/Nim/blob/02ee2ad13af9d96d95f22edaa949e2e326ffd725/main.c#L348))
 * [cppreference.com](https://en.cppreference.com/w/c/io/fseek) on specifics of fseek ([line 482](https://github.com/MetalTurtle18/Nim/blob/02ee2ad13af9d96d95f22edaa949e2e326ffd725/main.c#L482))
+* [Wikipedia](https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit) on ANSI escape codes for colored text
 * [Wikipedia](https://en.wikipedia.org/wiki/Nim#Proof_of_the_winning_formula) Nim mathematical strategy
